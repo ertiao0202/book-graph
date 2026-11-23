@@ -1,0 +1,43 @@
+{
+  "name": "book-graph",
+  "version": "1.7.2",
+  "description": "上传书籍自动生成可发布的人物关系图谱网页，支持用户自己的 DeepSeek / Kimi API（BYOK），含本地缓存与费用预估。",
+  "keywords": [
+    "人物关系图谱",
+    "书籍分析",
+    "关系可视化",
+    "知识图谱",
+    "book graph",
+    "character graph",
+    "关系图生成"
+  ],
+  "author": "张巍",
+  "license": "MIT",
+  "skills": "./skills/",
+  "skillInstructions": "用户提供书籍文件（txt/md/epub）并要求生成人物关系图谱、关系图、人物可视化时使用。必须先确认用户已在 config 中配置自己的 DeepSeek 或 Kimi API key（不得使用其他 key）；正式抽取前必须先运行 estimate 展示预估费用并获得用户确认；run 之后向用户说明实际花费与自检报告；同一本书重复处理会命中本地缓存不消耗 token。",
+  "interface": {
+    "displayName": "书籍人物关系图谱",
+    "shortDescription": "上传书籍，生成可发布的人物关系图谱",
+    "longDescription": "上传 txt、md 或 epub 书稿，使用你自己的 DeepSeek 或 Kimi API key，自动完成分块抽取、人物归并、阵营分组与关系构建，产出一个可交互、已适配手机端的单文件图谱网页。关系分类体系按书定制：先读样章为这本书量身设计专属关系类型（红楼是主仆/请托/嫌隙，三国是招募/兼并/对弈），图例、颜色、虚线全部由数据驱动，不同体裁的书不再共用一套生硬词表。支持搜索人物、点击看档案、阵营筛选、按关系类型筛选、双指缩放，可上传任意静态托管或直接分享文件；v1.4.0 新增：搜索框输入「甲→乙」查询两人最短关系链（高亮+链路卡可点击），以及关系时间轴（滑块或播放看关系网络随回目生长，旧缓存用 migrate-timeline 零 token 补齐）；时间轴播放时节点颜色随"当时所处阵营"演变（官→匪→官一目了然，由分块缓存离线推导零 token）；一键导出小红书竖版长图（分页 PNG，纯本地绘制零 token）；v1.6.0 新增「名场面榜」：自动挑出 Top 10 重磅关系，附原文摘句与回目出处，直接可发小红书；v1.7.0 新增「发布与分享」标准流程：图谱页右上角自带分享按钮（仅在线打开时显示，本地双击自动隐藏），组包（图谱页 + scenes/ 名场面榜画廊）后经 kimix 一键发布为公开网页，URL 固定可追溯可回滚，发布记录落盘；v1.7.1：图谱页底部新增引流入口（「我也要做一张」直达产品落地页，可统计来源），支持 --subtitle 副标题与书名号标题，移动端顶部排版优化；v1.7.2：阵营演变着色补完——时间轴播放时，某时点之前原文未提及所属阵营的人物显示为灰色「未明」，不再错误回填最终阵营（此前林冲等人物从登场起就显示最终阵营色，「官→匪」演变被抹平）。同一本书重复处理命中本地缓存，不再消耗 token；运行前给出 token 与费用预估，key 只存在本机。",
+    "developerName": "张巍",
+    "iconUrl": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4da.png",
+    "category": "PRODUCTIVITY",
+    "brandColor": {
+      "light": "#1783FF",
+      "dark": "#1783FF"
+    },
+    "defaultLocale": "zh-CN",
+    "locales": "./locales/",
+    "tryPrompts": [
+      "把这本 epub 生成人物关系图谱",
+      "先估算这本书的处理费用，用我自己的 DeepSeek key",
+      "用缓存重新生成上次那本书的图谱网页"
+    ],
+    "skillOverrides": {
+      "book-graph": {
+        "displayName": "书籍人物关系图谱",
+        "description": "上传书稿，用你自己的 DeepSeek 或 Kimi key 生成可发布的人物关系图谱网页。"
+      }
+    }
+  }
+}

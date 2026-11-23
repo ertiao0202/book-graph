@@ -1,0 +1,17 @@
+{
+  "displayName": "Book Character Graph",
+  "shortDescription": "Book character graph",
+  "longDescription": "Upload a txt, md or epub manuscript and use your own DeepSeek or Kimi API key to extract characters, merge aliases, group factions and build relationships, producing one interactive, mobile-friendly graph page. Search characters, tap for profiles, filter by faction and pinch to zoom; host it anywhere or share the file. Re-running the same book hits a local cache and costs zero tokens. You get a cost estimate before anything runs, and the API key stays on your machine only.",
+  "developerName": "Zhang Wei",
+  "tryPrompts": [
+    "Turn this epub into a character relationship graph",
+    "Estimate the processing cost first using my own DeepSeek key",
+    "Re-render the graph page from the cached data"
+  ],
+  "skillOverrides": {
+    "book-graph": {
+      "displayName": "Book Character Graph",
+      "description": "Upload a manuscript and generate a publishable character relationship graph page with your own DeepSeek or Kimi key."
+    }
+  }
+}
