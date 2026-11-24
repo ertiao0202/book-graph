@@ -14,7 +14,8 @@ description: 上传书籍文件（txt/md/epub），用用户自己的 DeepSeek �
    （或环境变量 `BOOK_GRAPH_CONFIG` 指定的路径）读取；key 只写入该文件（权限 600），
    不得打印完整 key、不得发往任何其他地址。脚本直连官方 API，不经第三方服务器。
 2. **先估算、后运行**：正式抽取前必须先跑 `estimate` 把 token 量和费用告诉用户，
-   等用户确认再跑 `run`。
+   等用户确认再跑 `run`（`run` 本身也有代码级确认：终端运行需输入 yes；
+   **agent 宿主等非交互环境必须显式加 `--yes`**，未加会直接拒绝执行）。
 3. **脚本的调用方式**：`python3 scripts/book_graph.py ...`（插件包挂载无执行位，
    禁止 `./scripts/book_graph.py`）。
 4. 工作目录随意，脚本内部用 `__file__` 定位模板与提示词，不受 cwd 影响。
@@ -38,8 +39,8 @@ python3 scripts/book_graph.py config --provider kimi --key sk-用户的key --mod
 # 1) 估算（不调 API，免费）
 python3 scripts/book_graph.py estimate 红楼梦.txt --title "红楼梦"
 
-# 2) 用户确认费用后，全流程（抽取→归并→生成网页）
-python3 scripts/book_graph.py run 红楼梦.txt --title "红楼梦"
+# 2) 用户确认费用后，全流程（抽取→归并→生成网页；非交互环境必须加 --yes）
+python3 scripts/book_graph.py run 红楼梦.txt --title "红楼梦" --yes
 
 # 3) 想换样式/改输出，用缓存重渲染，零 token
 python3 scripts/book_graph.py render --data ~/.cache/book-graph/<hash>.json --title "红楼梦"

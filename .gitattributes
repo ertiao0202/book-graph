@@ -1,0 +1,2 @@
+# 模板内联了 d3（单文件离线可用是有意设计），将其从语言统计中排除
+scripts/template.html linguist-vendored

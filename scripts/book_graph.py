@@ -14,6 +14,16 @@ import urllib.request, urllib.error
 from html.parser import HTMLParser
 from pathlib import Path
 
+# Windows 兼容兜底：stdout/stderr 被捕获（管道、CI、agent 宿主）时，中文 Windows 的
+# Python 会按 GBK 编码输出，¥ / ✅ 等非 GBK 字符直接抛 UnicodeEncodeError——
+# 最坏情况是钱已花完、HTML 已写出，却在最后一行打印时崩掉。统一改为 UTF-8 输出。
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            pass
+
 CONFIG_PATH = Path(os.environ.get("BOOK_GRAPH_CONFIG", str(Path.home() / ".config/book-graph/config.json")))
 CACHE_DIR = Path(os.environ.get("BOOK_GRAPH_CACHE", str(Path.home() / ".cache/book-graph")))
 
@@ -293,7 +303,8 @@ def split_chapters(text):
 
 
 def split_oversize(title, body, max_chars):
-    """单章超过上限时按段落硬切，防止超出模型上下文。"""
+    """单章超过上限时按段落硬切，防止超出模型上下文。
+    极端情况：整章没有换行（如脏数据 txt）仍超限时，按字符硬切兜底。"""
     if len(body) <= max_chars:
         return [(title, body)]
     paras, buf, out = body.split("\n"), [], []
@@ -304,7 +315,14 @@ def split_oversize(title, body, max_chars):
         buf.append(p)
     if buf:
         out.append((title, "\n".join(buf)))
-    return out
+    # 无换行整段超长的兜底：按字符硬切，保证任何单块都不超过模型上下文
+    final = []
+    for t, b in out:
+        while len(b) > max_chars:
+            final.append((t, b[:max_chars - 600]))
+            b = b[max_chars - 600:]
+        final.append((t, b))
+    return final
 
 
 def pack_chunks(chapters, max_chars=40000):
@@ -1357,7 +1375,7 @@ def cmd_config(args):
         print(f"deepseek 文档：{PROVIDERS['deepseek']['doc']} ｜ kimi 文档：{PROVIDERS['kimi']['doc']}")
         return
     save_config(cfg)
-    print(f"✅ 配置已保存到 {CONFIG_PATH}（仅本机，权限 600）")
+    print(f"✅ 配置已保存到 {CONFIG_PATH}（仅本机；权限 600 仅在 POSIX 系统生效）")
     print(f"   provider: {cfg.get('provider', 'deepseek')}  model: {cfg.get('model', PROVIDERS[cfg.get('provider','deepseek')]['model'])}")
 
 
@@ -1378,7 +1396,8 @@ def cmd_estimate(args):
     print(f"provider：{load_config().get('provider','deepseek')} / {prov['model']}")
     print(f"预估消耗：输入 {est_in/10000:.1f} 万 tokens + 输出 {est_out/10000:.1f} 万 tokens")
     print(f"预估费用：约 ¥{cost:.2f}（单价以官网为准，可在 config 中校准）")
-    print("提示：run 前会再次显示本估算并执行；同一本书重复处理会命中本地缓存，不再消耗 token。")
+    print("提示：确认费用后 run 实际执行（终端中会要求输入 yes 确认，非交互环境加 --yes）；"
+          "同一本书重复处理会命中本地缓存，不再消耗 token。")
 
 
 def collect_edges(all_chars):
@@ -1507,6 +1526,18 @@ def cmd_run(args):
             graph = data
             report = graph.pop("_report", {})
     else:
+        # 花费确认（BYOK：只有这条路径会真正调用 API；命中缓存不花钱，无需确认）
+        if not args.yes:
+            if not sys.stdin.isatty():
+                die("即将调用 API 产生费用，但当前是非交互环境（stdin 非 TTY），无法等待确认。\n"
+                    "如已确认费用，请显式追加 --yes 重试；或在终端直接运行并输入 yes。")
+            try:
+                ans = input(f"确认按以上估算调用 API（约 ¥{cost:.2f}）？输入 yes 继续：")
+            except EOFError:
+                ans = ""
+            if ans.strip().lower() not in ("yes", "y"):
+                print("已取消，未调用 API。")
+                sys.exit(0)
         t0 = time.time()
         all_chars = []
         chunk_chars_list = []   # 按分块顺序保留抽取结果，供时间轴离线推导
@@ -1647,6 +1678,8 @@ def main():
                         "命中缓存后调整本参数重新生成为零 token）")
     r.add_argument("--no-cache", action="store_true", help="忽略本地缓存强制重抽")
     r.add_argument("--strict", action="store_true", help="任一分块失败即中止（默认跳过该片段继续）")
+    r.add_argument("--yes", action="store_true",
+                   help="跳过花费确认直接执行（非交互环境如 agent 宿主必需；命中缓存时不涉及费用）")
     d = sub.add_parser("render", help="用缓存的中间数据重新生成网页（零 token）")
     d.add_argument("--data", required=True, help="缓存 JSON 路径")
     d.add_argument("--title", help="书名")

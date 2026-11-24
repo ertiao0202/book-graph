@@ -510,7 +510,9 @@ const TIMELINE = /*__TIMELINE__*/;
       if (isTouch) return;
       highlight(d, true);
       tooltip.style.display = "block";
-      tooltip.innerHTML = `<div class="tt">${d.name}</div><div class="tg">${d.en} · ${groupName(d, curChunk)}</div>`;
+      const debut = (d.first != null && TIMELINE && TIMELINE.ranges[d.first])
+        ? `<div class="tg">登场：${TIMELINE.ranges[d.first]}</div>` : "";
+      tooltip.innerHTML = `<div class="tt">${d.name}</div><div class="tg">${d.en} · ${groupName(d, curChunk)}</div>${debut}`;
     })
     .on("mousemove", e => {
       tooltip.style.left = Math.min(e.clientX + 14, W - 300) + "px";
@@ -534,7 +536,7 @@ const TIMELINE = /*__TIMELINE__*/;
     const rels = (adj[d.id] || []).map(l => {
       const s = l.source.id || l.source, t = l.target.id || l.target;
       const other = nodeById[s === d.id ? t : s];
-      return { other, label: l.label, rel: l.rel };
+      return { other, label: l.label, rel: l.rel, first: l.first };
     });
     // 同一人物只显示一次：多种关系合并为一行，用分号连接
     const byOther = new Map();
@@ -545,7 +547,11 @@ const TIMELINE = /*__TIMELINE__*/;
     const merged = [...byOther.values()].map(g => ({
       other: g.other,
       color: REL_STYLES[g.items[0].rel].color,
-      text: g.items.map(r => `${REL_STYLES[r.rel].label} · ${r.label}`).join("；")
+      text: g.items.map(r => {
+        const w = (r.first != null && TIMELINE && TIMELINE.ranges[r.first])
+          ? `（出处：${TIMELINE.ranges[r.first]}）` : "";
+        return `${REL_STYLES[r.rel].label} · ${r.label}${w}`;
+      }).join("；")
     })).sort((a, b) => b.other.size - a.other.size);
 
     const box = document.getElementById("panelRels");
